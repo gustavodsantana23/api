@@ -26,14 +26,15 @@ class UsersController < ApplicationController
 						if user.save!
 							if message == 'create'
 								# todo send email to admin
-								render json: user
+								create_new_customer params
+								render json: customer_response(user, nil, params)
 							else
 								customer = Customer.find_by(email: user.email)
 								render json: customer_response(user, customer)
 							end
 						end
 					else
-						render json: {code: 400, message: message}
+						render json: {code: 400, description: message}, status: 400
 					end
 				elsif params[:grant_access] == 'veterinary'
 					ok, message = is_a_valid_veterinary? params
@@ -42,14 +43,15 @@ class UsersController < ApplicationController
 						if user.save!
 							if message == 'create'
 								# todo send email to admin
-								render json: user
+								create_new_veterinary params
+								render json: profile_response(user, nil, params)
 							else
 								profile = Profile.find_by(email: user.email)
 								render json: profile_response(user, profile)
 							end
 						end
 					else
-						render json: {code: 400, message: message}
+						render json: {code: 400, description: message}, status: 400
 					end
 				else
 					ok, message = is_a_valid_clinic? params
@@ -58,22 +60,23 @@ class UsersController < ApplicationController
 						if user.save!
 							if message == 'create'
 								# todo send email to admin
-								render json: user
+								create_new_clinic params
+								render json: profile_response(user, nil, params)
 							else
 								profile = Profile.find_by(email: user.email)
 								render json: profile_response(user, profile)
 							end
 						end
 					else
-						render json: {code: 400, message: message}
+						render json: {code: 400, description: message}, status: 400
 					end
 				end	
 			else
-				render json: {code: 400, message: "O campo grant_access deve ser 'veterinary'" + \
-					"'clinic' ou 'customer'"}
+				render json: {code: 400, description: "O campo grant_access deve ser 'veterinary'" + \
+					"'clinic' ou 'customer'"}, status: 400
 			end
 		else
-			render json: {code: 400, message: "O campo " + message +" é necessário."}
+			render json: {code: 400, description: "O campo " + message +" é necessário."}, status: 400
 		end
 	end
 
@@ -102,58 +105,20 @@ class UsersController < ApplicationController
     				role: permitted_params[:grant_access]}
   end  
 
+	# def customer_params
+	# 	params[:role] = params[:grant_access]
+ #    params.permit(:email, :password, :role)
+	# end
+
+	# def user_params
+ #    params[:role] = params[:grant_access]
+ #    params.permit(:email, :password, :role, :crmv_region,
+ #    	:crvm_number, :cpf)
+ #  end  
+
   # Adding a method to check if current_user can update itself. 
   # This uses our UserModel method.
   def authorize
     return_unauthorized unless current_user && current_user.can_modify_user?(params[:id])
-  end
-
-  def profile_response(user, profile)
-  	{
-	    "user_id": user.id,
-	    "name": profile.name,
-	    "email": user.email,
-	    "type": user.role,
-	    "avatar": "http://1.semantic-ui.com/images/home-avatar.png",
-	    "date_joined": user.created_at,
-	    "last_login": user.last_login,
-	    "phone": profile.phone,
-	    "emergency_phone": profile.emergency_phone,
-	    "crmv_region": profile.registration_region,
-	    "crmv_number": profile.registration_number,
-	    "notify_when_exam_created": profile.notify_exam_created,
-	    "notify_when_report_is_ready": profile.notify_report_finished,
-	    "address": {
-	      "address_city": profile.address_city,
-	      "address_name": profile.address_name,
-	      "address_number": profile.address_number,
-	      "address_state": profile.address_state,
-	      "address_zipcode": profile.address_zipcode,
-	      "address_neighborhood": profile.address_neighborhood
-    	}
-    }
-  end
-
-  def customer_response(user, customer)
-		{
-	    "user_id": user.id,
-	    "name": customer.name,
-	    "email": user.email,
-	    "type": user.role,
-	    "avatar": "http://1.semantic-ui.com/images/home-avatar.png",
-	    "date_joined": user.created_at,
-	    "last_login": user.last_login,
-	    "phone": customer.phone,
-	    "notify_when_exam_created": customer.notify_exam_created,
-	    "notify_when_report_is_ready": customer.notify_report_finished,
-	    "address": {
-	      "address_city": customer.address_city,
-	      "address_name": customer.address_name,
-	      "address_number": customer.address_number,
-	      "address_state": customer.address_state,
-	      "address_zipcode": customer.address_zipcode,
-	      "address_neighborhood": customer.address_neighborhood
-    	}
-    }
   end
 end

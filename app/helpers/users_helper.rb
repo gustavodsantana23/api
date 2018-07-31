@@ -6,16 +6,8 @@ module UsersHelper
 	  	return false, "grant_access"
 	  end
 
-	  if not params[:name].present?
-	  	return false, "Nome"
-	  end
-
 	  if not params[:email].present?
 	  	return false, "Email"
-	  end
-
-	  if not params[:phone].present?
-	  	return false, "Telefone"
 	  end
 
 	  if not params[:password].present? or params[:password].length < 6
@@ -63,17 +55,17 @@ module UsersHelper
 					return true, "update"
 				end
 			else
-				return false, "Email inválido."
+				return false, "Email inválido. Verifique o email digitado."
 			end
 		else
-			return false, "CPF inválido."
+			return false, "CPF inválido. Verifique o CPF digitado."
 		end
 	end
 
 	def is_a_valid_veterinary?(params)
 		if is_veterinary_crmv_valid? params
 			if is_email_valid? params[:email]
-				if User.where(email: params[:email]).length > 0
+				if User.find_by(email: params[:email])
 					return false, "Já existe um usuário com este email."
 				end
 				profile = Profile.where(email: params[:email])
@@ -86,8 +78,10 @@ module UsersHelper
 				else
 					other = Profile.where(registration_region: params[:crmv_region],\
 						registration_number: params[:crmv_number])
-					if other.length == 1 and other.email != profile.email
-						return false, "Já existe outro usuário com este CRMV"
+					if other.length == 1
+						if other[0].email != profile[0].email
+							return false, "Já existe outro usuário com este CRMV"
+						end
 					end	
 					return true, "update"
 				end
@@ -102,8 +96,142 @@ module UsersHelper
 	def is_a_valid_clinic?(params)
 		if not is_email_valid? params[:email]
 			return false, "Email inválido."
+		else
+			profile = Profile.find_by(email: params[:email])
+			user = User.find_by(email: params[:email])
+			if user
+				return false, "Já existe um usuário com esse email."
+			elsif profile
+				return true, "update"
+			else
+				return true, "create"
+			end
 		end
-
 		return true
 	end
+
+  def profile_response(user, profile, params=nil)
+  	if params
+  		{
+		    "user_id": user.id,
+		    "name": "",
+		    "email": user.email,
+		    "type": user.role,
+		    "avatar": "http://1.semantic-ui.com/images/home-avatar.png",
+		    "date_joined": user.created_at,
+		    "last_login": user.last_login,
+		    "phone": "",
+		    "emergency_phone": "",
+		    "crmv_region": params[:registration_region],
+		    "crmv_number": params[:registration_number],
+		    "notify_when_exam_created": "",
+		    "notify_when_report_is_ready": "",
+		    "address": {
+		      "address_city": "",
+		      "address_name": "",
+		      "address_number": "",
+		      "address_state": "",
+		      "address_zipcode": "",
+		      "address_neighborhood": "",
+	    	}
+	    }
+	  else
+	  	debugger
+	  	{
+		    "user_id": user.id,
+		    "name": profile.name,
+		    "email": user.email,
+		    "type": user.role,
+		    "avatar": "http://1.semantic-ui.com/images/home-avatar.png",
+		    "date_joined": user.created_at,
+		    "last_login": user.last_login,
+		    "phone": profile.phone,
+		    "emergency_phone": profile.emergency_phone,
+		    "crmv_region": profile.registration_region,
+		    "crmv_number": profile.registration_number,
+		    "notify_when_exam_created": profile.notify_exam_created,
+		    "notify_when_report_is_ready": profile.notify_report_finished,
+		    "address": {
+		      "address_city": profile.address_city,
+		      "address_name": profile.address_name,
+		      "address_number": profile.address_number,
+		      "address_state": profile.address_state,
+		      "address_zipcode": profile.address_zipcode,
+		      "address_neighborhood": profile.address_neighborhood
+	    	}
+	    }
+	  end
+  end
+
+  def customer_response(user, customer, params=nil)
+  	if params
+  		{
+  			"user_id": user.id,
+  			"name": "",
+  			"email": user.email,
+  			"type": user.role,
+		    "avatar": "http://1.semantic-ui.com/images/home-avatar.png",
+  			"date_joined": user.created_at,
+		    "last_login": user.last_login,
+		    "phone": "",
+		    "document": params[:cpf],
+		    "address": {
+		      "address_city": "",
+		      "address_name": "",
+		      "address_number": "",
+		      "address_state": "",
+		      "address_zipcode": "",
+		      "address_neighborhood": "",
+	    	}
+  		}
+  	else
+			{
+		    "user_id": user.id,
+		    "name": customer.name,
+		    "email": user.email,
+		    "type": user.role,
+		    "avatar": "http://1.semantic-ui.com/images/home-avatar.png",
+		    "date_joined": user.created_at,
+		    "last_login": user.last_login,
+		    "phone": customer.phone,
+		    "document": customer.cpf,
+		    "notify_when_exam_created": customer.notify_exam_created,
+		    "notify_when_report_is_ready": customer.notify_report_finished,
+		    "address": {
+		      "address_city": customer.address_city,
+		      "address_name": customer.address_name,
+		      "address_number": customer.address_number,
+		      "address_state": customer.address_state,
+		      "address_zipcode": customer.address_zipcode,
+		      "address_neighborhood": customer.address_neighborhood
+	    	}
+	    }
+  	end
+  end
+
+  def create_new_veterinary(params)
+  	Profile.create(:name => params[:name]) do |u|
+		  u.phone = params[:phone]
+		  u.registration_number = params[:crmv_number]
+		  u.registration_region = params[:crmv_region]
+		  u.email = params[:email]
+		  u.professional_type = '2'
+		end
+  end
+
+  def create_new_clinic(params)
+  	Profile.create(:name => params[:name]) do |u|
+		  u.phone = params[:phone]
+		  u.email = params[:email]
+		  u.professional_type = '1'
+		end
+  end
+
+  def create_new_customer(params)
+  	Customer.create(:name => params[:name]) do |u|
+		  u.phone = params[:phone]
+		  u.email = params[:email]
+		  u.cpf = params[:cpf]
+		end
+  end
 end

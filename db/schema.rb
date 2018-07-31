@@ -319,7 +319,7 @@ ActiveRecord::Schema.define(version: 2018_07_30_190619) do
     t.boolean "notify_exam_created", null: false
     t.boolean "notify_report_finished", null: false
     t.boolean "notify_clinic_updated", null: false
-    t.string "professional_type", limit: 1, null: false
+    t.string "type", limit: 1, null: false
     t.integer "user_id"
     t.string "email", limit: 100
     t.boolean "is_independent", null: false
