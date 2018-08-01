@@ -110,7 +110,7 @@ module UsersHelper
 		return true
 	end
 
-  def profile_response(user, profile, params=nil)
+  def profile_response(user, params=nil)
   	if params
   		{
 		    "user_id": user.id,
@@ -136,7 +136,7 @@ module UsersHelper
 	    	}
 	    }
 	  else
-	  	debugger
+	  	profile = Profile.find_by(email: user.email)
 	  	{
 		    "user_id": user.id,
 		    "name": profile.name,
@@ -163,7 +163,7 @@ module UsersHelper
 	  end
   end
 
-  def customer_response(user, customer, params=nil)
+  def customer_response(user, params=nil)
   	if params
   		{
   			"user_id": user.id,
@@ -185,6 +185,7 @@ module UsersHelper
 	    	}
   		}
   	else
+	  	customer = Customer.find_by(email: user.email)
 			{
 		    "user_id": user.id,
 		    "name": customer.name,
@@ -234,4 +235,39 @@ module UsersHelper
 		  u.cpf = params[:cpf]
 		end
   end
+
+  # def create_new_veterinary(params)
+  # 	Profile.create(:name => params[:name]) do |u|
+		#   u.phone = params[:phone]
+		#   u.registration_number = params[:crmv_number]
+		#   u.registration_region = params[:crmv_region]
+		#   u.email = params[:email]
+		#   u.professional_type = '2'
+		#   u.is_independent = true
+		# 	u.notify_exam_created = true
+		# 	u.notify_report_finished = true
+		# 	u.notify_clinic_updated = true
+		# end
+  # end
+
+  # def create_new_clinic(params)
+  # 	Profile.create(:name => params[:name]) do |u|
+		#   u.phone = params[:phone]
+		#   u.email = params[:email]
+		#   u.professional_type = '1'
+		#   u.notify_exam_created = true
+		# 	u.notify_report_finished = true
+		# 	u.notify_clinic_updated = true
+		# end
+  # end
+
+  # def create_new_customer(params)
+  # 	Customer.create(:name => params[:name]) do |u|
+		#   u.phone = params[:phone]
+		#   u.email = params[:email]
+		#   u.cpf = params[:cpf]
+		#   u.notify_exam_created = true
+  #   	u.notify_report_finished = true
+		# end
+  # end
 end

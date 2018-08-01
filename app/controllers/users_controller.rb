@@ -1,5 +1,5 @@
 class UsersController < ApplicationController
-	before_action :authenticate_user,  only: [:index, :current, :update]
+	before_action :authenticate_user,  only: [:index, :current, :update, :exams]
   before_action :authorize_as_admin, only: [:destroy]
   before_action :authorize,          only: [:update]
 
@@ -11,7 +11,15 @@ class UsersController < ApplicationController
 
   def current
     current_user.update!(last_login: Time.now)
-    render json: current_user
+    if current_user.role == "customer"
+    	render json: customer_response(current_user)
+    else	
+    	render json: profile_response(current_user)
+    end
+  end
+
+  def exams
+  	
   end
 
   # Method to create a new user using the safe params we setup.
@@ -27,10 +35,9 @@ class UsersController < ApplicationController
 							if message == 'create'
 								# todo send email to admin
 								create_new_customer params
-								render json: customer_response(user, nil, params)
+								render json: customer_response(user, params)
 							else
-								customer = Customer.find_by(email: user.email)
-								render json: customer_response(user, customer)
+								render json: customer_response(user)
 							end
 						end
 					else
@@ -44,10 +51,9 @@ class UsersController < ApplicationController
 							if message == 'create'
 								# todo send email to admin
 								create_new_veterinary params
-								render json: profile_response(user, nil, params)
+								render json: profile_response(user, params)
 							else
-								profile = Profile.find_by(email: user.email)
-								render json: profile_response(user, profile)
+								render json: profile_response(user)
 							end
 						end
 					else
